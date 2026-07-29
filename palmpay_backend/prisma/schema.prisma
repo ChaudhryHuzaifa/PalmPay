@@ -1,0 +1,122 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ADD THIS ENUM DEFINITION
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  PIN_REQUIRED
+}
+
+model User {
+  id                   String             @id @default(uuid())
+  name                 String
+  email                String             @unique
+  phoneNumber          String             @unique @map("phone_number")
+  pinHash              String             @map("pin_hash")
+  balance              Decimal            @default(0)
+  wallet               Wallet?
+  biometrics           BiometricProfile[]
+  sentTransactions     Transaction[]      @relation("sentTransactions")
+  receivedTransactions Transaction[]      @relation("receivedTransactions")
+  sessions             BiometricSession[]
+
+  // ADD THESE FOR PAYMENT INTENT RELATIONS
+  merchantIntents PaymentIntent[] @relation("MerchantIntents")
+  customerIntents PaymentIntent[] @relation("CustomerIntents")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("users")
+}
+
+model Wallet {
+  id        String   @id @default(uuid())
+  userId    String   @unique @map("user_id")
+  user      User     @relation(fields: [userId], references: [id])
+  balance   Decimal  @default(0)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("wallets")
+}
+
+model BiometricProfile {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id])
+  embedding String // Base64 encoded encrypted embedding
+  threshold Float    @default(0.85)
+  handSide  String   @map("hand_side") // LEFT, RIGHT
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("biometric_profiles")
+}
+
+model BiometricSession {
+  id         String   @id @default(uuid())
+  userId     String   @map("user_id")
+  user       User     @relation(fields: [userId], references: [id])
+  confidence Float
+  decision   String // APPROVED, PIN_REQUIRED, REJECTED
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@map("biometric_sessions")
+}
+
+model Transaction {
+  id              String            @id @default(cuid())
+  amount          Float
+  senderId        String
+  receiverId      String
+  status          TransactionStatus // Now using the enum
+  method          String? // Make optional
+  transactionType String?
+  category        String?
+  description     String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  sender   User @relation("sentTransactions", fields: [senderId], references: [id])
+  receiver User @relation("receivedTransactions", fields: [receiverId], references: [id])
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?  @map("user_id")
+  action    String
+  details   Json
+  ipAddress String?  @map("ip_address")
+  userAgent String?  @map("user_agent")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("audit_logs")
+}
+
+model PaymentIntent {
+  id          String    @id @default(cuid())
+  merchantId  String
+  customerId  String?
+  amount      Float
+  currency    String    @default("AED")
+  status      String    @default("PENDING") // PENDING, COMPLETED, FAILED, EXPIRED
+  palmImage   String?
+  expiresAt   DateTime
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  merchant User  @relation("MerchantIntents", fields: [merchantId], references: [id])
+  customer User? @relation("CustomerIntents", fields: [customerId], references: [id])
+
+  @@index([merchantId])
+  @@index([customerId])
+  @@index([status])
+}

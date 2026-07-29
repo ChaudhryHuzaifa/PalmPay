@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: palm_pay
+      POSTGRES_PASSWORD: password123
+      POSTGRES_DB: palm_pay
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  backend:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: "postgresql://palm_pay:password123@postgres:5432/palm_pay?schema=public"
+      JWT_SECRET: "your-jwt-secret"
+      ENCRYPTION_KEY: "32-byte-key-for-encryption-here"
+      FASTAPI_URL: "http://biometric:8000"
+    depends_on:
+      - postgres
+      - biometric
+
+  biometric:
+    build: ./biometric_service
+    ports:
+      - "8000:8000"
+
+volumes:
+  postgres_data:

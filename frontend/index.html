@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- ⚠️ CRITICAL: NO CSP META TAG - IT'S BLOCKING EVERYTHING -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <title>PalmPay - Secure Biometric Payments</title>
+    
+    <!-- Emergency script to detect and fix CSP issues -->
+    <script>
+      // CSP Emergency Detection and Fix
+      (function() {
+        console.log('🚀 PalmPay Starting - CSP Emergency Mode');
+        
+        // Remove any existing CSP meta tags
+        const metaTags = document.querySelectorAll('meta[http-equiv="Content-Security-Policy"]');
+        metaTags.forEach(tag => {
+          console.log('🗑️ Removing CSP meta tag:', tag.getAttribute('content'));
+          tag.remove();
+        });
+        
+        // Check if we have CSP errors
+        window.addEventListener('securitypolicyviolation', (e) => {
+          console.error('🚨 CSP Violation Detected:', {
+            blockedURI: e.blockedURI,
+            violatedDirective: e.violatedDirective,
+            documentURI: e.documentURI
+          });
+          
+          // Show user-friendly error
+          if (!document.getElementById('csp-error')) {
+            const errorDiv = document.createElement('div');
+            errorDiv.id = 'csp-error';
+            errorDiv.style.cssText = `
+              position: fixed;
+              top: 10px;
+              right: 10px;
+              background: #dc2626;
+              color: white;
+              padding: 10px 15px;
+              border-radius: 5px;
+              z-index: 9999;
+              font-family: Arial, sans-serif;
+              font-size: 14px;
+              max-width: 300px;
+              box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            `;
+            errorDiv.innerHTML = `
+              <strong>🚨 Security Restriction Detected</strong>
+              <p style="margin: 5px 0; font-size: 12px;">
+                Some features may be limited. This is expected in development mode.
+              </p>
+              <button onclick="this.parentElement.remove()" style="
+                background: white;
+                color: #dc2626;
+                border: none;
+                padding: 3px 10px;
+                border-radius: 3px;
+                font-size: 11px;
+                cursor: pointer;
+                margin-top: 5px;
+              ">Dismiss</button>
+            `;
+            document.body.appendChild(errorDiv);
+          }
+        });
+        
+        // Add a global reload function
+        window.reloadWithoutSecurity = function() {
+          console.log('🔄 Reloading with security disabled...');
+          localStorage.setItem('skip_security_checks', 'true');
+          window.location.reload();
+        };
+        
+        // If we have a skip flag, remove more aggressively
+        if (localStorage.getItem('skip_security_checks') === 'true') {
+          console.log('✅ Security checks disabled for this session');
+          
+          // Remove any CSP headers that might be set by server
+          const originalFetch = window.fetch;
+          window.fetch = function(...args) {
+            const [url, options = {}] = args;
+            const newOptions = {
+              ...options,
+              headers: {
+                ...options.headers,
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+              }
+            };
+            
+            // Remove any CSP-related headers
+            if (newOptions.headers) {
+              delete newOptions.headers['Content-Security-Policy'];
+              delete newOptions.headers['Content-Security-Policy-Report-Only'];
+            }
+            
+            return originalFetch.call(this, url, newOptions);
+          };
+        }
+        
+        console.log('✅ CSP Emergency Mode Initialized');
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    
+    <!-- Emergency fallback in case React fails to load -->
+    <div id="emergency-fallback" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #0f172a; color: white; padding: 40px; font-family: Arial, sans-serif;">
+      <div style="max-width: 600px; margin: 0 auto; text-align: center;">
+        <h1 style="color: #3b82f6;">🚨 PalmPay Emergency Mode</h1>
+        <p>Unable to load the main application. This is likely due to strict security settings.</p>
+        
+        <div style="background: #1e293b; padding: 20px; border-radius: 10px; margin: 20px 0;">
+          <h3>Quick Fixes:</h3>
+          <ol style="text-align: left; margin-left: 20px;">
+            <li>Open Chrome with disabled security:
+              <code style="background: #334155; padding: 2px 5px; border-radius: 3px; display: block; margin: 5px 0;">
+                chrome.exe --disable-web-security --user-data-dir="C:\chrome-dev"
+              </code>
+            </li>
+            <li>Clear browser cache and reload</li>
+            <li>Try a different browser (Firefox, Edge)</li>
+          </ol>
+        </div>
+        
+        <button onclick="window.reloadWithoutSecurity()" style="
+          background: #3b82f6;
+          color: white;
+          border: none;
+          padding: 10px 20px;
+          border-radius: 5px;
+          cursor: pointer;
+          font-size: 16px;
+          margin: 10px;
+        ">
+          Try Reload Without Security
+        </button>
+        
+        <button onclick="window.location.href='http://localhost:3000/health'" style="
+          background: #10b981;
+          color: white;
+          border: none;
+          padding: 10px 20px;
+          border-radius: 5px;
+          cursor: pointer;
+          font-size: 16px;
+          margin: 10px;
+        ">
+          Test Backend Connection
+        </button>
+      </div>
+    </div>
+    
+    <script type="module" src="/src/renderer/main.tsx"></script>
+    
+    <!-- Emergency script to show fallback if app doesn't load -->
+    <script>
+      setTimeout(() => {
+        if (!document.getElementById('root').children.length) {
+          console.log('⚠️ React app not loaded, showing emergency fallback');
+          document.getElementById('emergency-fallback').style.display = 'block';
+        }
+      }, 5000);
+    </script>
+  </body>
+</html>

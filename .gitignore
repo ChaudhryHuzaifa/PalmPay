@@ -1,0 +1,23 @@
+# Environment variables / Secrets
+.env
+.env.local
+
+# Python / Django
+__pycache__/
+*.pyc
+venv/
+.venv/
+
+# Node / React
+node_modules/
+build/
+dist/
+
+# OS/IDE files
+.DS_Store
+.vscode/
+*.h5
+
+*.h5
+
+*.h5
